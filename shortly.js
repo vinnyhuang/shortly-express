@@ -3,6 +3,7 @@ var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
 var bcrypt = require('bcrypt-nodejs');
+var session = require('express-session');
 
 var db = require('./app/config');
 var Users = require('./app/collections/users');
@@ -22,6 +23,12 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
+// Cookie parsing middleware to check for cookies
+app.use(session({
+  secret: 'pranaynay',
+  cookie: {},
+  saveUnitialized: true
+}));
 
 app.get('/', 
 function(req, res) {
@@ -40,36 +47,47 @@ function(req, res) {
   });
 });
 
-app.post('/links', 
-function(req, res) {
-  var uri = req.body.url;
+app.post('/links', function(req, res) {
 
-  if (!util.isValidUrl(uri)) {
-    console.log('Not a valid url: ', uri);
-    return res.sendStatus(404);
-  }
+  //Check user first before rendering the page
+  util.checkUser(req, res, function(bool) {
+    if (bool) {
+      console.log('cb true');
+      var uri = req.body.url;
 
-  new Link({ url: uri }).fetch().then(function(found) {
-    if (found) {
-      res.status(200).send(found.attributes);
-    } else {
-      util.getUrlTitle(uri, function(err, title) {
-        if (err) {
-          console.log('Error reading URL heading: ', err);
-          return res.sendStatus(404);
+      if (!util.isValidUrl(uri)) {
+        console.log('Not a valid url: ', uri);
+        return res.sendStatus(404);
+      }
+
+      new Link({ url: uri }).fetch().then(function(found) {
+        if (found) {
+          res.status(200).send(found.attributes);
+        } else {
+          util.getUrlTitle(uri, function(err, title) {
+            if (err) {
+              console.log('Error reading URL heading: ', err);
+              return res.sendStatus(404);
+            }
+
+            Links.create({
+              url: uri,
+              title: title,
+              baseUrl: req.headers.origin
+            })
+            .then(function(newLink) {
+              res.status(200).send(newLink);
+            });
+          });
         }
-
-        Links.create({
-          url: uri,
-          title: title,
-          baseUrl: req.headers.origin
-        })
-        .then(function(newLink) {
-          res.status(200).send(newLink);
-        });
       });
+    } else {
+      console.log('cb false');
+      res.redirect('/login');
     }
   });
+  //checkUser();
+
 });
 
 /************************************************************/
@@ -135,6 +153,15 @@ app.post('/login', function(req, res) {
       res.redirect('/login');
     }
   });
+});
+
+app.get('/login', function(req, res) {
+  console.log('app get login');
+  res.render('login');
+});
+
+app.get('/signup', function(req, res) {
+  res.render('signup');
 });
 
 /************************************************************/
