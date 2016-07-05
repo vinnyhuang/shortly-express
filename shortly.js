@@ -2,7 +2,7 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
-
+var bcrypt = require('bcrypt-nodejs');
 
 var db = require('./app/config');
 var Users = require('./app/collections/users');
@@ -85,8 +85,12 @@ app.post('/signup', function(req, res) {
   .fetch()
   .then(function(found) {
     if (found) {
+      // Username already exists
+      console.log('Username is already taken, please try another one');
+      // TODO: Figure out how to handle user sign up that already exists
       res.status(200).send(found.attributes);
     } else {
+      // Create new user and add it to the collection
       Users.create({
         username: username,
         password: password
@@ -108,12 +112,23 @@ app.post('/login', function(req, res) {
   var username = req.body.username;
   var password = req.body.password;
 
-  new User({ username: username, password: password }).fetch()
+  new User({ username: username }).fetch()
   .then(function(found) {
     if (found) {
       //Proceed with login
-      //Redirect to homepage with user logged in
-      res.redirect('/');
+      //Compare the password they passed in with the hash
+      bcrypt.compare(password, found.attributes.password, function(err, result) {
+        if (err) { throw err; }
+        if (result === true) {
+          // Password matches with hash, allow user to proceed:
+          //Redirect to homepage with user logged in
+          res.redirect('/');
+        } else {
+          console.log('Sorry that was the wrong password!');
+          res.redirect('/login');
+        }
+      });
+      
     } else {
       //Send a 404 and keep user at /login
       console.log('User doesn\'t exist, please sign up first!');
