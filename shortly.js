@@ -80,8 +80,9 @@ app.post('/signup', function(req, res) {
 
   var username = req.body.username;
   var password = req.body.password;
-  
-  new User({ username: username, password: password }).fetch()
+
+  new User({ username: username })
+  .fetch()
   .then(function(found) {
     if (found) {
       res.status(200).send(found.attributes);
@@ -91,14 +92,34 @@ app.post('/signup', function(req, res) {
         password: password
       })
       .then(function(newUser) {
-        res.status(200).send(newUser);
+        // res.status(200).send(newUser);
+        // console.log('yoooo im redirectinnn');
+        // res.redirect(307, '/login');
+        res.redirect('/');
       });
     }
   });
 });
 
 app.post('/login', function(req, res) {
-  res.end();
+
+  console.log('Yo im loggin innnnn', req.body);
+
+  var username = req.body.username;
+  var password = req.body.password;
+
+  new User({ username: username, password: password }).fetch()
+  .then(function(found) {
+    if (found) {
+      //Proceed with login
+      //Redirect to homepage with user logged in
+      res.redirect('/');
+    } else {
+      //Send a 404 and keep user at /login
+      console.log('User doesn\'t exist, please sign up first!');
+      res.redirect('/login');
+    }
+  });
 });
 
 /************************************************************/
