@@ -24,6 +24,7 @@ Shortly.Router = Backbone.Router.extend({
   },
 
   login: function() {
+    console.log('router');
     this.swapView(new Shortly.createLoginView());
   }
 });

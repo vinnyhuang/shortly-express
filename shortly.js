@@ -157,7 +157,12 @@ app.post('/login', function(req, res) {
 
 app.get('/login', function(req, res) {
   console.log('app get login');
-  res.render('login');
+  console.log('req', req);
+  console.log('res', res);
+
+  // this.Shortly.router.navigate('/login', { trigger: true });
+  res.render('index');
+  // res.end();
 });
 
 app.get('/signup', function(req, res) {

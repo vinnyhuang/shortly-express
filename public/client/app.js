@@ -34,6 +34,9 @@ window.Shortly = Backbone.View.extend({
 
   renderLoginView: function(e) {
     e && e.preventDefault();
+    console.log('renderLoginView, app');
+    console.log('this.router', this.router);
+    console.log('this', this);
     this.router.navigate('/login', { trigger: true });
   },
 
